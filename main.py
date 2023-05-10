@@ -2,12 +2,12 @@
 import re
 from decimal import Decimal
 
-from src.models.parameters import Parameters
-from src.apachelogs import LogParser
+from apachelogs import LogParser
+
 from src.models.client import Client_Model
+from src.models.parameters import Parameters
 from src.models.request import Request_Model
 from src.models.session import Session_Model
-
 
 # List of standard log formats
 format_log = {
@@ -94,7 +94,7 @@ def create_request(entry: str, id: Decimal) -> Request_Model:
 
 
 # Function to parse the log file
-def compute(file, collection: list, parameters: Parameters):
+async def compute(file, collection: list, parameters: Parameters):
     # import parameters from Parameters Model
     parser_format, session_time_limit, exclude_keywords = load_parameters(
         parameters)
