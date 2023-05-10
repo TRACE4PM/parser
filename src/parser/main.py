@@ -4,10 +4,10 @@ from decimal import Decimal
 
 from apachelogs import LogParser
 
-from src.models.client import Client_Model
-from src.models.parameters import Parameters
-from src.models.request import Request_Model
-from src.models.session import Session_Model
+from .models.client import Client_Model
+from .models.parameters import Parameters
+from .models.request import Request_Model
+from .models.session import Session_Model
 
 # List of standard log formats
 format_log = {
