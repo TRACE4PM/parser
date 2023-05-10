@@ -93,6 +93,7 @@ def create_request(entry: str, id: Decimal) -> Request_Model:
     return req
 
 
+# Main function of the program
 # Function to parse the log file
 async def compute(file, collection: list, parameters: Parameters):
     # import parameters from Parameters Model
