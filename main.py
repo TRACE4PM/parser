@@ -1,35 +1,41 @@
 # Import necessary modules
-import io
-import json
 import re
 from decimal import Decimal
 
+from src.models.parameters import Parameters
 from src.apachelogs import LogParser
 from src.models.client import Client_Model
 from src.models.request import Request_Model
 from src.models.session import Session_Model
 
-# Initialize the log parser with the format of the Apache log files
-# parser = LogParser("%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"")
 
-# List of strings that indicate non-valuable lines
-# temp = []
-# temp = ["/img", "/css", "/js", "/fontes","/browser_components", ".js", ".css", "/nom"]
+# List of standard log formats
+format_log = {
+    "Apache Common": "",
+    "Apache Combined": "",
+    "Nginx default": "",
+    "AWS ELB access": "",
+    "Microsoft IIS": "",
+    "JSON": ""
+}
 
 
 # Function to read the json parameters file
-def load_json_parameters():
-    with open("src/json/parameter.json", "r") as f:
-        j = json.load(f)
-        exclude_keywords = j["exclude_keywords"]
-        session_time_limit = j["session_time_limit"]
-        parser_type = j["parser_type"]
-        parser_format = j["parser_format"]
-        return parser_type, parser_format, session_time_limit, exclude_keywords,
+def load_parameters(parameters: Parameters):
+    exclude_keywords = parameters.exclude_keywords
+    session_time_limit = parameters.session_time_limit
+    if parameters.parser_type == "custom":
+        parser_format = parameters.parser_format
+    elif parameters.parser_type in format_log.keys():
+        parser_format = format_log[parameters.parser_type]
+    else:
+        raise ValueError('Parser type is not in the expected format.')
+    print(parser_format, session_time_limit, exclude_keywords)
+    return parser_format, session_time_limit, exclude_keywords
 
 
 # Function to determine if a line from the log file is valuable
-def line_is_valuable(temp, line):
+def line_is_valuable(temp: list, line: str):
     for i in temp:
         if i in line:
             return False
@@ -89,64 +95,65 @@ def create_request(entry: str, id: Decimal) -> Request_Model:
 
 
 # Function to parse the log file
-async def compute(file, collection: dict):
+def compute(file, collection: dict, parameters: Parameters):
     # import parameters from json file
-    parser_type, parser_format, session_time_limit, exclude_keywords = load_json_parameters()
+    parser_format, session_time_limit, exclude_keywords = load_parameters(
+        parameters)
     parser = LogParser(parser_format)
     # try to get the clients from the collection (if it exists)
     dict_client = collection
-    # with open(file, "r") as f:
-    f = file.read()
-    for entry in f:
-        # Replace spaces with underscores in the relevant portion of the line
-        entry = replace_space_with_underscore(entry)
-        # Check if the line is valuable
-        if line_is_valuable(exclude_keywords, entry):
-            entry = parser.parse(entry)
+    with open(file, "r") as f:
+        # f = file.read()
+        for entry in f:
+            # Replace spaces with underscores in the relevant portion of the line
+            entry = replace_space_with_underscore(entry)
+            # Check if the line is valuable
+            if not line_is_valuable(exclude_keywords, entry):
+                print(1)
+                entry = parser.parse(entry)
 
-            client_id, country, city = get_id_contry_city(
-                entry.remote_host)
-            # If the client is not in the list, create it
-            if client_id not in dict_client.keys():
-                # Create User
-                cli = create_client(
-                    entry, client_id, country, city)
+                client_id, country, city = get_id_contry_city(
+                    entry.remote_host)
+                # If the client is not in the list, create it
+                if client_id not in dict_client.keys():
+                    # Create User
+                    cli = create_client(
+                        entry, client_id, country, city)
 
-                # Create session with id 1
-                session_id = Decimal("1")
-                sess = create_session(session_id)
-
-                # Create request with id 1.1
-                request_id = Decimal("1.1")
-                req = create_request(entry, request_id)
-
-                sess.requests.append(req)
-                cli.sessions.append(sess)
-                dict_client[client_id] = cli
-            else:
-                cli = dict_client[client_id]
-                last_req_time = cli.sessions[-1].requests[-1].request_time
-                # If the request time is less than 1 hour from the previous request, add it to the same session
-                if (entry.request_time - last_req_time).total_seconds() < session_time_limit:
-                    # Create request with id depending on the number of requests in the session
-                    request_id = cli.sessions[-1].requests[-1].request_id + \
-                        Decimal("0.1")
-                    req = create_request(entry, request_id)
-                    # Add the request to the lastsession
-                    cli.sessions[-1].requests.append(req)
-                # Else, create a new session and add the request to it
-                else:
-                    # Create session with id depending on the last session id
-                    session_id = cli.sessions[-1].session_id + Decimal("1")
+                    # Create session with id 1
+                    session_id = Decimal("1")
                     sess = create_session(session_id)
 
-                    # Create request with id depending on the number of session id
-                    request_id = session_id + Decimal("0.1")
+                    # Create request with id 1.1
+                    request_id = Decimal("1.1")
                     req = create_request(entry, request_id)
 
                     sess.requests.append(req)
                     cli.sessions.append(sess)
+                    dict_client[client_id] = cli
+                else:
+                    cli = dict_client[client_id]
+                    last_req_time = cli.sessions[-1].requests[-1].request_time
+                    # If the request time is less than 1 hour from the previous request, add it to the same session
+                    if (entry.request_time - last_req_time).total_seconds() < session_time_limit:
+                        # Create request with id depending on the number of requests in the session
+                        request_id = cli.sessions[-1].requests[-1].request_id + \
+                            Decimal("0.1")
+                        req = create_request(entry, request_id)
+                        # Add the request to the lastsession
+                        cli.sessions[-1].requests.append(req)
+                    # Else, create a new session and add the request to it
+                    else:
+                        # Create session with id depending on the last session id
+                        session_id = cli.sessions[-1].session_id + Decimal("1")
+                        sess = create_session(session_id)
 
+                        # Create request with id depending on the number of session id
+                        request_id = session_id + Decimal("0.1")
+                        req = create_request(entry, request_id)
+
+                        sess.requests.append(req)
+                        cli.sessions.append(sess)
     # Add the new clients to the collection
     list_client = []
     for val in dict_client.values():
@@ -154,11 +161,13 @@ async def compute(file, collection: dict):
     return list_client
 
 
-# If run as a script, parse the log file and print the result
-# if __name__ == "__main__":
-#     # Parse the log file
-#     myFile = io.StringIO("")
-#     myFile.write("Write a line into the file\n")
-#     cli = compute(myFile, {})
-#     with open("src/json/clients.json", "w") as f:
-#         json.dump(cli, f)
+if __name__ == "__main__":
+    tmp = Parameters(
+        parser_type="custom",
+        parser_format="%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"",
+        session_time_limit=3600,
+        exclude_keywords=[""]
+    )
+    f = "./short.log"
+    cli = compute(f, {}, tmp)
+    print(cli)
