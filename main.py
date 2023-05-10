@@ -30,7 +30,6 @@ def load_parameters(parameters: Parameters):
         parser_format = format_log[parameters.parser_type]
     else:
         raise ValueError('Parser type is not in the expected format.')
-    print(parser_format, session_time_limit, exclude_keywords)
     return parser_format, session_time_limit, exclude_keywords
 
 
@@ -95,21 +94,26 @@ def create_request(entry: str, id: Decimal) -> Request_Model:
 
 
 # Function to parse the log file
-def compute(file, collection: dict, parameters: Parameters):
-    # import parameters from json file
+def compute(file, collection: list, parameters: Parameters):
+    # import parameters from Parameters Model
     parser_format, session_time_limit, exclude_keywords = load_parameters(
         parameters)
+
+    # Create a parser object
     parser = LogParser(parser_format)
-    # try to get the clients from the collection (if it exists)
-    dict_client = collection
+
+    # get the clients from the collection (if any)
+    dict_client = {}
+    for client in collection:
+        dict_client[client.client_id] = client
+
     with open(file, "r") as f:
         # f = file.read()
         for entry in f:
             # Replace spaces with underscores in the relevant portion of the line
             entry = replace_space_with_underscore(entry)
             # Check if the line is valuable
-            if not line_is_valuable(exclude_keywords, entry):
-                print(1)
+            if line_is_valuable(exclude_keywords, entry):
                 entry = parser.parse(entry)
 
                 client_id, country, city = get_id_contry_city(
@@ -154,7 +158,7 @@ def compute(file, collection: dict, parameters: Parameters):
 
                         sess.requests.append(req)
                         cli.sessions.append(sess)
-    # Add the new clients to the collection
+    # Add the all clients to the list
     list_client = []
     for val in dict_client.values():
         list_client.append(val.dict())
@@ -166,8 +170,25 @@ if __name__ == "__main__":
         parser_type="custom",
         parser_format="%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"",
         session_time_limit=3600,
-        exclude_keywords=[""]
+        exclude_keywords=[]
     )
     f = "./short.log"
-    cli = compute(f, {}, tmp)
-    print(cli)
+    cli = Client_Model(
+        client_id="1",
+        country="France",
+        city="Paris",
+        user_agent="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
+        sessions=[]
+    )
+    cli2 = Client_Model(
+        client_id="2",
+        country="OUI OUI",
+        city="Paris",
+        user_agent="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
+        sessions=[]
+    )
+    li = []
+    li.append(cli)
+    li.append(cli2)
+    test = compute(f, li, tmp)
+    print(test)
