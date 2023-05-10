@@ -108,7 +108,7 @@ async def compute(file, collection: list, parameters: Parameters):
     for client in collection:
         dict_client[client.client_id] = client
 
-    with open(file, "rb") as f:
+    with open(file, "r") as f:
         # f = file.read()
         for entry in f:
             # Replace spaces with underscores in the relevant portion of the line
