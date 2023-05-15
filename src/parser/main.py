@@ -65,32 +65,42 @@ def replace_space_with_underscore(line):
     return re.sub(pattern, lambda match: match.group().replace(' ', '_'), line)
 
 
+# Function to concatenate two numbers
+def concatenate(unit: int, decimal: int) -> Decimal:
+    return Decimal(str(unit) + '.' + str(decimal))
+
+
+# Function to get unit and decimal from a Decimal
+def get_unit_and_decimal(number: Decimal):
+    return int(str(number).split('.')[0]), int(str(number).split('.')[1])
+
+
 # Function to create a client object from a log entry
-def create_client(entry: str, client_id: str, country: str, city: str) -> Client_Model:
-    cli = Client_Model()
-    cli.client_id = client_id
-    cli.country = country
-    cli.city = city
-    cli.user_agent = str(entry.headers_in["User-Agent"])
-    return cli
+def create_client(entry: str, client_id_temp: str, country_temp: str, city_temp: str) -> Client_Model:
+    return Client_Model(
+        client_id=client_id_temp,
+        country=country_temp,
+        city=city_temp,
+        user_agent=str(entry.headers_in["User-Agent"])
+    )
 
 
 # Function to create a session object from a log entry
-def create_session(id: Decimal) -> Session_Model:
-    sess = Session_Model()
-    sess.session_id = id
-    return sess
+def create_session(id: int) -> Session_Model:
+    return Session_Model(
+        session_id=id
+    )
 
 
 # Function to create a request object from a log entry
-def create_request(entry: str, id: Decimal) -> Request_Model:
-    req = Request_Model()
-    req.request_id = id
-    req.request_time = entry.request_time
-    req.request_url = str(entry.request_line)
-    req.response_code = str(entry.final_status)
-    req.referer = str(entry.headers_in["Referer"])
-    return req
+def create_request(entry: str, id_session: int, id_request: int) -> Request_Model:
+    return Request_Model(
+        request_id=concatenate(id_session, id_request),
+        request_time=entry.request_time,
+        request_url=str(entry.request_line),
+        response_code=str(entry.final_status),
+        referer=str(entry.headers_in["Referer"])
+    )
 
 
 # Main function of the program
@@ -109,7 +119,6 @@ async def compute(file, collection: list, parameters: Parameters):
         dict_client[client.client_id] = client
 
     with open(file, "r") as f:
-        # f = file.read()
         for entry in f:
             # Replace spaces with underscores in the relevant portion of the line
             entry = replace_space_with_underscore(entry)
@@ -119,43 +128,47 @@ async def compute(file, collection: list, parameters: Parameters):
 
                 client_id, country, city = get_id_contry_city(
                     entry.remote_host)
-                # If the client is not in the list, create it
+                # If the client is not in the dict, create it
                 if client_id not in dict_client.keys():
                     # Create User
                     cli = create_client(
                         entry, client_id, country, city)
 
                     # Create session with id 1
-                    session_id = Decimal("1")
+                    session_id = int(1)
                     sess = create_session(session_id)
 
-                    # Create request with id 1.1
-                    request_id = Decimal("1.1")
-                    req = create_request(entry, request_id)
+                    # Create request with id 1
+                    request_id = int(1)
+                    req = create_request(entry, session_id, request_id)
 
                     sess.requests.append(req)
                     cli.sessions.append(sess)
                     dict_client[client_id] = cli
+
+                # Append the request to the client
                 else:
                     cli = dict_client[client_id]
                     last_req_time = cli.sessions[-1].requests[-1].request_time
                     # If the request time is less than 1 hour from the previous request, add it to the same session
                     if (entry.request_time - last_req_time).total_seconds() < session_time_limit:
-                        # Create request with id depending on the number of requests in the session
-                        request_id = cli.sessions[-1].requests[-1].request_id + \
-                            Decimal("0.1")
-                        req = create_request(entry, request_id)
+                        # Create request with id depending on the previous
+                        session_id, request_id = get_unit_and_decimal(
+                            cli.sessions[-1].requests[-1].request_id)
+                        request_id += int(1)
+                        req = create_request(entry, session_id, request_id)
                         # Add the request to the lastsession
                         cli.sessions[-1].requests.append(req)
+
                     # Else, create a new session and add the request to it
                     else:
                         # Create session with id depending on the last session id
-                        session_id = cli.sessions[-1].session_id + Decimal("1")
+                        session_id = cli.sessions[-1].session_id + int(1)
                         sess = create_session(session_id)
 
                         # Create request with id depending on the number of session id
-                        request_id = session_id + Decimal("0.1")
-                        req = create_request(entry, request_id)
+                        request_id = int(1)
+                        req = create_request(entry, session_id, request_id)
 
                         sess.requests.append(req)
                         cli.sessions.append(sess)
@@ -164,32 +177,3 @@ async def compute(file, collection: list, parameters: Parameters):
     for val in dict_client.values():
         list_client.append(val.dict())
     return list_client
-
-
-if __name__ == "__main__":
-    tmp = Parameters(
-        parser_type="custom",
-        parser_format="%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"",
-        session_time_limit=3600,
-        exclude_keywords=[]
-    )
-    f = "./short.log"
-    cli = Client_Model(
-        client_id="1",
-        country="France",
-        city="Paris",
-        user_agent="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
-        sessions=[]
-    )
-    cli2 = Client_Model(
-        client_id="2",
-        country="OUI OUI",
-        city="Paris",
-        user_agent="Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)",
-        sessions=[]
-    )
-    li = []
-    li.append(cli)
-    li.append(cli2)
-    test = compute(f, li, tmp)
-    print(test)

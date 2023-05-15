@@ -2,3 +2,4 @@
 .vscode
 .DS_Store
 poetry.lock
+.pytest_cache

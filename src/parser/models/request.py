@@ -1,6 +1,6 @@
 from .base import Base_model
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
 
 
 class Request_Model(Base_model):
