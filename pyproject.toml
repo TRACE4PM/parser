@@ -10,8 +10,8 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = "^1.10.7"
 apachelogs = "^0.6.0"
+pydantic = "^1.10.7"
 
 
 [tool.poetry.group.dev.dependencies]

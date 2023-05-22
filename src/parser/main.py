@@ -5,19 +5,9 @@ from decimal import Decimal
 from apachelogs import LogParser
 
 from .models.client import Client_Model
-from .models.parameters import Parameters
+from .models.parameters import Parameters, log_type
 from .models.request import Request_Model
 from .models.session import Session_Model
-
-# List of standard log formats
-format_log = {
-    "Apache Common": "",
-    "Apache Combined": "",
-    "Nginx default": "",
-    "AWS ELB access": "",
-    "Microsoft IIS": "",
-    "JSON": ""
-}
 
 
 # Function to read the json parameters file
@@ -26,8 +16,8 @@ def load_parameters(parameters: Parameters):
     session_time_limit = parameters.session_time_limit
     if parameters.parser_type == "custom":
         parser_format = parameters.parser_format
-    elif parameters.parser_type in format_log.keys():
-        parser_format = format_log[parameters.parser_type]
+    elif parameters.parser_type in log_type.keys():
+        parser_format = log_type[parameters.parser_type]
     else:
         raise ValueError('Parser type is not in the expected format.')
     return parser_format, session_time_limit, exclude_keywords
