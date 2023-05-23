@@ -10,29 +10,34 @@ from .models.request import Request_Model
 from .models.session import Session_Model
 
 
-# Function to read the json parameters file
-def load_parameters(parameters: Parameters):
-    exclude_keywords = parameters.exclude_keywords
-    session_time_limit = parameters.session_time_limit
-    if parameters.parser_type == "custom":
-        parser_format = parameters.parser_format
-    elif parameters.parser_type in log_type.keys():
-        parser_format = log_type[parameters.parser_type]
-    else:
-        raise ValueError('Parser type is not in the expected format.')
-    return parser_format, session_time_limit, exclude_keywords
-
-
-# Function to determine if a line from the log file is valuable
 def line_is_valuable(temp: list, line: str):
+    """Function to determine if a line from the log file is valuable
+
+    Args:
+        temp (list): list of keywords to exclude
+        line (str): line to be processed
+
+    Returns:
+        bool: True if the line is valuable, False otherwise 
+    """
     for i in temp:
         if i in line:
             return False
     return True
 
 
-# Function to extract the id, country, and city from a string in the format "##id##country##city##"
 def get_id_contry_city(expression):
+    """Function to extract the id, country, and city from a string in the format "##id##country##city##"
+
+    Args:
+        expression (str): string to be processed
+
+    Raises:
+        ValueError: if the expression is not in the expected format
+
+    Returns:
+        tuple: id, country, city
+    """
     pattern = r'^##(\w+)##([\w-]+)##([\w-]+)##$'
     match = re.match(pattern, expression)
     if match:
@@ -49,24 +54,56 @@ def get_id_contry_city(expression):
         raise ValueError('Expression is not in the expected format.')
 
 
-# Function to replace spaces with underscores in a string between "##" markers
 def replace_space_with_underscore(line):
+    """Function to replace spaces with underscores in a string between two hashes
+
+    Args:
+        line (str): string to be processed
+
+    Returns:
+        str: processed string
+    """
     pattern = r'(?<=##)[a-zA-Z ]+(?=[^#]*##)'
     return re.sub(pattern, lambda match: match.group().replace(' ', '_'), line)
 
 
-# Function to concatenate two numbers
 def concatenate(unit: int, decimal: int) -> Decimal:
+    """Function to concatenate two numbers
+
+    Args:
+        unit (int): unit part
+        decimal (int): decimal part
+
+    Returns:
+        Decimal: concatenated number
+    """
     return Decimal(str(unit) + '.' + str(decimal))
 
 
-# Function to get unit and decimal from a Decimal
 def get_unit_and_decimal(number: Decimal):
+    """Function to get unit and decimals from a Decimal
+
+    Args:
+        number (Decimal): number to be split
+
+    Returns:
+        tuple[int, int]: unit and decimals
+    """
     return int(str(number).split('.')[0]), int(str(number).split('.')[1])
 
 
-# Function to create a client object from a log entry
 def create_client(entry: str, client_id_temp: str, country_temp: str, city_temp: str) -> Client_Model:
+    """Function to create a client object from a log entry
+
+    Args:
+        entry (str): log entry
+        client_id_temp (str): client id
+        country_temp (str): country
+        city_temp (str): city
+
+    Returns:
+        Client_Model: _description_
+    """
     return Client_Model(
         client_id=client_id_temp,
         country=country_temp,
@@ -75,15 +112,31 @@ def create_client(entry: str, client_id_temp: str, country_temp: str, city_temp:
     )
 
 
-# Function to create a session object from a log entry
 def create_session(id: int) -> Session_Model:
+    """Function to create a session object from a log entry
+
+    Args:
+        id (int): id of the session
+
+    Returns:
+        Session_Model: session object
+    """
     return Session_Model(
         session_id=id
     )
 
 
-# Function to create a request object from a log entry
 def create_request(entry: str, id_session: int, id_request: int) -> Request_Model:
+    """Function to create a request object from a log entry
+
+    Args:
+        entry (str): log entry
+        id_session (int): id of the session
+        id_request (int): id of the request
+
+    Returns:
+        Request_Model: request object
+    """
     return Request_Model(
         request_id=concatenate(id_session, id_request),
         request_time=entry.request_time,
@@ -93,12 +146,21 @@ def create_request(entry: str, id_session: int, id_request: int) -> Request_Mode
     )
 
 
-# Main function of the program
-# Function to parse the log file
 async def compute(file, collection: list, parameters: Parameters):
+    """Function to parse the log file
+
+    Args:
+        file (str): path of the log file
+        collection (list): list of clients already existing
+        parameters (Parameters): parameters of the parser
+
+    Returns:
+        list_client(list): list of clients parsed from the log file
+    """
     # import parameters from Parameters Model
-    parser_format, session_time_limit, exclude_keywords = load_parameters(
-        parameters)
+    parser_format = parameters.parser_format
+    session_time_limit = parameters.session_time_limit
+    exclude_keywords = parameters.exclude_keywords
 
     # Create a parser object
     parser = LogParser(parser_format)

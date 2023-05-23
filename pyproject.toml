@@ -12,6 +12,7 @@ readme = "README.md"
 python = "^3.11"
 apachelogs = "^0.6.0"
 pydantic = "^1.10.7"
+pytest-asyncio = "^0.21.0"
 
 
 [tool.poetry.group.dev.dependencies]
