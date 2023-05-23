@@ -170,7 +170,7 @@ async def compute(file, collection: list, parameters: Parameters):
     for client in collection:
         dict_client[client.client_id] = client
 
-    with open(file, "r") as f:
+    with open(file, "r", encoding='utf-8') as f:
         for entry in f:
             # Replace spaces with underscores in the relevant portion of the line
             entry = replace_space_with_underscore(entry)
