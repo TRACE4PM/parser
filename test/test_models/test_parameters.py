@@ -82,3 +82,15 @@ def test_parameters_invalid_exclude_keywords():
         'msg': 'str type expected',
         'type': 'type_error.str'
     }]
+
+
+def test_paramters_for_gallica():
+    """
+    Test if the parser_format is not attribued if parser type is "custom"
+    """
+    parameters = Parameters(
+        parser_type="custom",
+        parser_format="%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"",
+    )
+    assert parameters.parser_type == "custom"
+    assert parameters.parser_format == "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\""

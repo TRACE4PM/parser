@@ -34,7 +34,8 @@ class Parameters(Base_model):
         if parser_type != "custom" and parser_format is not None:
             raise ValueError(
                 "parser_format must be null when parser_type is not 'custom'")
-        values['parser_format'] = log_type[parser_type]
+        if parser_type != "custom":
+            values['parser_format'] = log_type[parser_type]
         return values
 
     @validator('session_time_limit', always=True)
