@@ -163,7 +163,7 @@ async def compute(file, collection: list, parameters: Parameters):
     exclude_keywords = parameters.exclude_keywords
 
     # Create a parser object
-    parser = LogParser(parser_format)
+    parser = LogParser(parser_format, encoding="utf-8")
 
     # get the clients from the collection (if any)
     dict_client = {}
