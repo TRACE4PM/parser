@@ -1,6 +1,4 @@
-# Import necessary modules
 import re
-import codecs
 from decimal import Decimal
 
 from apachelogs import LogParser
@@ -147,7 +145,7 @@ def create_request(entry: str, id_session: int, id_request: int) -> Request_Mode
     )
 
 
-async def compute(file, collection: list, parameters: Parameters):
+async def compute(file, collection: list, parameters: Parameters) -> list[Client_Model]:
     """Function to parse the log file
 
     Args:
@@ -164,17 +162,15 @@ async def compute(file, collection: list, parameters: Parameters):
     exclude_keywords = parameters.exclude_keywords
 
     # Create a parser object
-    parser = LogParser(parser_format)
+    parser = LogParser(parser_format, encoding='utf-8')
 
     # get the clients from the collection (if any)
     dict_client = {}
     for client in collection:
         dict_client[client.client_id] = client
 
-    with open(file, "r", encoding='utf-8', errors='replace') as f:
+    with open(file, "r", encoding='utf-8') as f:
         for entry in f:
-            # Encode the line in latin1 and decode it in utf-8
-            entry = entry.encode('latin1').decode('utf-8', errors='replace')
             # Replace spaces with underscores in the relevant portion of the line
             entry = replace_space_with_underscore(entry)
             # Check if the line is valuable

@@ -16,6 +16,19 @@ log_type = {
 
 
 class Parameters(Base_model):
+    """Parameters model for the parser
+
+    Args:
+        parser_type (log_type): log standard format
+        parser_format (str, optional): custom log format. Defaults to None.
+        session_time_limit (int, optional): session time limit in seconds. Defaults to 3600.
+        exclude_keywords (list[str], optional): list of keywords to exclude from the log file. Defaults to [].
+
+    Raises:
+        ValueError: parser type must be in log_type
+        ValueError: parser_format must be set when parser_type is 'custom'
+        ValueError: parser_format must be null when parser_type is not 'custom'
+    """
     parser_type: str
     parser_format: str = None
     session_time_limit: int = 3600
