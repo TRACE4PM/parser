@@ -1,8 +1,9 @@
 import re
 from decimal import Decimal
 
-from apachelogs import LogParser
-
+#from apachelogs import LogParser
+import apache_log_parser as LogParser
+from .utils import clean_file
 from .models.client import Client_Model
 from .models.parameters import Parameters, log_type
 from .models.request import Request_Model
@@ -51,20 +52,7 @@ def get_id_contry_city(expression):
         return match.group(1), country, city
     else:
         raise ValueError('Expression is not in the expected format.')
-
-
-def replace_space_with_underscore(line):
-    """Function to replace spaces with underscores in a string between two hashes
-
-    Args:
-        line (str): string to be processed
-
-    Returns:
-        str: processed string
-    """
-    pattern = r'(?<=##)[a-zA-Z ]+(?=[^#]*##)'
-    return re.sub(pattern, lambda match: match.group().replace(' ', '_'), line)
-
+    
 
 def concatenate(unit: int, decimal: int) -> Decimal:
     """Function to concatenate two numbers
@@ -107,7 +95,7 @@ def create_client(entry: str, client_id_temp: str, country_temp: str, city_temp:
         client_id=client_id_temp,
         country=country_temp,
         city=city_temp,
-        user_agent=str(entry.headers_in["User-Agent"])
+        user_agent=entry["request_header_user_agent"]
     )
 
 
@@ -136,16 +124,18 @@ def create_request(entry: str, id_session: int, id_request: int) -> Request_Mode
     Returns:
         Request_Model: request object
     """
+    if entry["request_header_referer"] == "-":
+        entry["request_header_referer"] = None
     return Request_Model(
         request_id=concatenate(id_session, id_request),
-        request_time=entry.request_time,
-        request_url=str(entry.request_line),
-        response_code=str(entry.final_status),
-        referer=str(entry.headers_in["Referer"])
+        request_time=entry["time_received_tz_datetimeobj"],
+        request_url=entry["request_url"],
+        response_code=entry["status"],
+        referer=entry["request_header_referer"]
     )
 
 
-async def compute(file, collection: list, parameters: Parameters) -> list[Client_Model]:
+async def parser(file, collection: list, parameters: Parameters) -> list[Client_Model]:
     """Function to parse the log file
 
     Args:
@@ -156,13 +146,15 @@ async def compute(file, collection: list, parameters: Parameters) -> list[Client
     Returns:
         list_client(list): list of clients parsed from the log file
     """
+    # Clean the file using utils
+    await clean_file(file)
+    
     # import parameters from Parameters Model
-    parser_format = parameters.parser_format
     session_time_limit = parameters.session_time_limit
     exclude_keywords = parameters.exclude_keywords
 
     # Create a parser object
-    parser = LogParser(parser_format, encoding='utf-8')
+    parse = LogParser.make_parser(parameters.parser_format)
 
     # get the clients from the collection (if any)
     dict_client = {}
@@ -171,14 +163,12 @@ async def compute(file, collection: list, parameters: Parameters) -> list[Client
 
     with open(file, "r", encoding='utf-8') as f:
         for entry in f:
-            # Replace spaces with underscores in the relevant portion of the line
-            entry = replace_space_with_underscore(entry)
             # Check if the line is valuable
             if line_is_valuable(exclude_keywords, entry):
-                entry = parser.parse(entry)
+                # Parse the entry with apache-log-parser
+                entry = parse(entry)
 
-                client_id, country, city = get_id_contry_city(
-                    entry.remote_host)
+                client_id, country, city = get_id_contry_city(entry["remote_host"])
                 # If the client is not in the dict, create it
                 if client_id not in dict_client.keys():
                     # Create User

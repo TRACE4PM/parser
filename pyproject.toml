@@ -12,12 +12,12 @@ readme = "README.md"
 python = "^3.11"
 pydantic = "^1.10.7"
 pytest-asyncio = "^0.21.0"
-apachelogs = "^0.6.0"
+apache-log-parser = "^1.7.0"
+pytest = "^7.3.1"
 
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]
