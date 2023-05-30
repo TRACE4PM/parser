@@ -192,7 +192,7 @@ async def parser(file, collection: list, parameters: Parameters) -> list[Client_
                     cli = dict_client[client_id]
                     last_req_time = cli.sessions[-1].requests[-1].request_time
                     # If the request time is less than 1 hour from the previous request, add it to the same session
-                    if (entry.request_time - last_req_time).total_seconds() < session_time_limit:
+                    if (entry["time_received_tz_datetimeobj"] - last_req_time).total_seconds() < session_time_limit:
                         # Create request with id depending on the previous
                         session_id, request_id = get_unit_and_decimal(
                             cli.sessions[-1].requests[-1].request_id)
