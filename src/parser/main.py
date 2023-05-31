@@ -1,13 +1,13 @@
 import re
-from decimal import Decimal
 
 #from apachelogs import LogParser
 import apache_log_parser as LogParser
-from .utils import clean_file
+
 from .models.client import Client_Model
 from .models.parameters import Parameters, log_type
 from .models.request import Request_Model
 from .models.session import Session_Model
+from .utils import clean_file
 
 
 def line_is_valuable(temp: list, line: str):
@@ -54,7 +54,7 @@ def get_id_contry_city(expression):
         raise ValueError('Expression is not in the expected format.')
     
 
-def concatenate(unit: int, decimal: int) -> Decimal:
+def concatenate(unit: int, decimal: int) -> str:
     """Function to concatenate two numbers
 
     Args:
@@ -62,13 +62,14 @@ def concatenate(unit: int, decimal: int) -> Decimal:
         decimal (int): decimal part
 
     Returns:
-        Decimal: concatenated number
+        string: concatenated number
     """
-    return Decimal(str(unit) + '.' + str(decimal))
+    string = str(unit) + '.' + str(decimal)
+    return string
 
 
-def get_unit_and_decimal(number: Decimal):
-    """Function to get unit and decimals from a Decimal
+def get_unit_and_decimal(number: str):
+    """Function to get unit and decimals from a string
 
     Args:
         number (Decimal): number to be split

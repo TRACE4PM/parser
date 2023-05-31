@@ -21,7 +21,7 @@ async def test_compute_for_gallica():
         "sessions": [{
             "session_id": 1,
             "requests": [{
-                "request_id": Decimal("1.1"),
+                "request_id": str("1.1"),
                 "request_time": datetime(2017, 3, 31, 10, 7, 24, tzinfo=timezone(timedelta(hours=2))),
                 "request_url": "/rapport.html",
                 "response_code": "200",
