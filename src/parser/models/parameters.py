@@ -30,7 +30,7 @@ class Parameters(Base_model):
         ValueError: parser_format must be null when parser_type is not 'custom'
     """
     parser_type: str
-    parser_format: str = None
+    parser_format: str | None = None
     session_time_limit: int = 3600
     exclude_keywords: list[str] = []
 

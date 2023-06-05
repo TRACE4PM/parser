@@ -14,6 +14,14 @@ def replace_space_with_hyphen(line):
     return re.sub(pattern, lambda match: match.group().replace(' ', '-'), line)
 
 def add_missing_space(line):
+    """Function to add a space after a hash if it is missing
+
+    Args:
+        line (str): string to be processed
+
+    Returns:
+        str: processed string
+    """
     pattern = r"##(?!\s)-"
     line = re.sub(pattern, "## -", line)
     return line
