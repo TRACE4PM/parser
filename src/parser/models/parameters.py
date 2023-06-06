@@ -1,19 +1,26 @@
 from pydantic import validator, root_validator
-import json
+
 from .base import Base_model
 
+
 # List of standard log formats
-log_type = json.load(
-    open(file="src/parser/log_format.json")
-)
+log_type = {
+    "custom": "",
+    "Apache Common":  "%h %l %u %t \"%r\" %>s %b",
+    "Apache Combined": "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\"",
+    "Nginx default": "$remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\" \"$http_user_agent\"",
+    "AWS ELB access": "%t %h:%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %D",
+    "Microsoft IIS": "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"",
+    "JSON": "{\"remote_host\":\"%h\",\"remote_log_name\":\"%l\",\"remote_user\":\"%u\",\"request_time\":\"%t\",\"request_line\":\"%r\",\"final_status\":\"%>s\",\"bytes_sent\":\"%b\",\"headers_in\":{\"Referer\":\"%{Referer}i\",\"User-Agent\":\"%{User-Agent}i\"}}",
+}
 
 
 class Parameters(Base_model):
     """Parameters model for the parser
 
     Args:
-        parser_type (log_type): log standard format. Refer to log_format.json for the list of standard formats.
-        parser_format (str, optional): custom log format. Defaults to None. Prefer to use parser_type instead.
+        parser_type (log_type): log standard format
+        parser_format (str, optional): custom log format. Defaults to None.
         session_time_limit (int, optional): session time limit in seconds. Defaults to 3600.
         exclude_keywords (list[str], optional): list of keywords to exclude from the log file. Defaults to [].
 
