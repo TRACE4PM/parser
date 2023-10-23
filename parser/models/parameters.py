@@ -14,7 +14,7 @@ log_type = {
     "JSON": "{\"remote_host\":\"%h\",\"remote_log_name\":\"%l\",\"remote_user\":\"%u\",\"request_time\":\"%t\",\"request_line\":\"%r\",\"final_status\":\"%>s\",\"bytes_sent\":\"%b\",\"headers_in\":{\"Referer\":\"%{Referer}i\",\"User-Agent\":\"%{User-Agent}i\"}}",
 }
 
-
+# Should be named : "LogParameters"
 class Parameters(Base_model):
     """Parameters model for the parser
 
