@@ -266,7 +266,7 @@ async def parser(file, collection: list, parameters: Parameters) -> list[Client_
     return list_client
 
 
-def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
+async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
     # import parameters from Parameters Model
     session_time_limit = parameters.session_time_limit
 
