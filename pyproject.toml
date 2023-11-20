@@ -9,7 +9,7 @@ authors = [
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.11,<3.13"
 pydantic = "^1.10.7"
 pytest-asyncio = "^0.21.0"
 apache-log-parser = "^1.7.0"
