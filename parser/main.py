@@ -181,7 +181,7 @@ def create_action(parameters: CsvParameters, date: str, action: str, id_session:
     )
 
 
-async def parser(file, collection: list, parameters: Parameters) -> list[Client_Model]:
+def parser(file, collection: list, parameters: Parameters) -> list[Client_Model]:
     """Function to parse the log file
 
     Args:
@@ -193,7 +193,7 @@ async def parser(file, collection: list, parameters: Parameters) -> list[Client_
         list_client(list): list of clients parsed from the log file
     """
     # Clean the file using utils
-    await clean_file(file)
+    clean_file(file)
 
     # import parameters from Parameters Model
     session_time_limit = parameters.session_time_limit
@@ -266,7 +266,7 @@ async def parser(file, collection: list, parameters: Parameters) -> list[Client_
     return list_client
 
 
-async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
+def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
     # import parameters from Parameters Model
     session_time_limit = parameters.session_time_limit
 
