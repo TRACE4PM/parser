@@ -153,7 +153,8 @@ def create_request(entry: str, id_session: int, id_request: int) -> Request_Mode
 
 
 # The same functions as create_request but for csv files
-def create_action(parameters: CsvParameters, date: str, action: str, id_session: int, id_action: int) -> Request_Model:
+def create_action(parameters: CsvParameters, date: str, action: str, id_session: int, id_action: int,
+                  id_cluster: int = None) -> Request_Model:
     """Function to create a request object from a log entry
 
     Args:
@@ -177,7 +178,8 @@ def create_action(parameters: CsvParameters, date: str, action: str, id_session:
         request_time=ts,
         request_url=action,
         response_code=None,
-        referer=None
+        referer=None,
+        cluster_id = id_cluster
     )
 
 
@@ -266,7 +268,7 @@ async def parser(file, collection: list, parameters: Parameters) -> list[Client_
     return list_client
 
 
-async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
+def csv_parser(file, collection: list, parameters: CsvParameters) -> list[Client_Model]:
     # import parameters from Parameters Model
     session_time_limit = parameters.session_time_limit
 
@@ -300,6 +302,9 @@ async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[
         # print(client_id)
         # column_names = df.columns.values.tolist()
         # print(column_names)
+        cluster_id = None
+        if "cluster_id" in df.columns:
+            cluster_id = df.loc[row, "cluster_id"]
 
         row_date = df.loc[row, parameters.timestamp_column]
         row_action = df.loc[row, parameters.action_column]
@@ -318,7 +323,7 @@ async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[
 
             # Create action
 
-            action = create_action(parameters, row_date, row_action, session_id, request_id)
+            action = create_action(parameters, row_date, row_action, session_id, request_id, cluster_id)
 
             sess.requests.append(action)
             cli.sessions.append(sess)
@@ -336,7 +341,7 @@ async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[
                 session_id, request_id = get_unit_and_decimal(
                     cli.sessions[-1].requests[-1].request_id)
                 request_id += int(1)
-                action = create_action(parameters, row_date, row_action, session_id, request_id)
+                action = create_action(parameters, row_date, row_action, session_id, request_id, cluster_id)
                 # Add the request to the lastsession
                 cli.sessions[-1].requests.append(action)
                 # Else, create a new session and add the request to it
@@ -347,7 +352,7 @@ async def csv_parser(file, collection: list, parameters: CsvParameters) -> list[
 
                 # Create request with id depending on the number of session id
                 request_id = int(1)
-                action = create_action(parameters, row_date, row_action, session_id, request_id)
+                action = create_action(parameters, row_date, row_action, session_id, request_id, cluster_id)
 
                 sess.requests.append(action)
                 cli.sessions.append(sess)
