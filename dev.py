@@ -5,7 +5,7 @@ from parser.main import csv_parser
 from parser.models.parameters import Parameters
 from parser.models.csv_parameters import CsvParameters
 
-file_path = "test/test_files/log_moodle.csv"
+file_path = "test/test_files/cluster_log_0.csv"
 collection = []
 
 # parameters = Parameters(
@@ -14,12 +14,12 @@ collection = []
 # )
 
 parameters = CsvParameters(
-    separator=",",
+    separator=";",
     timestamp_column="timestamp",
-    timestamp_format="%d/%m/%y, %H:%M",
-    action_column="Description",
-    session_id_column="User full name",
-    session_time_limit=3600,
+    timestamp_format="%Y-%m-%d %H:%M:%S",
+    action_column="action",
+    session_id_column="client_id",
+    session_time_limit=3600
 )
 
 print(parameters)
